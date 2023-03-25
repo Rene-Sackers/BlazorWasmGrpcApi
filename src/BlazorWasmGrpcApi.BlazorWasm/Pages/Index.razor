@@ -1,0 +1,60 @@
+﻿@page "/"
+@using BlazorWasmGrpcApi.Shared.GrpcServicesInterfaces
+@using BlazorWasmGrpcApi.Shared.Models
+
+@if (_forecasts == null)
+{
+	<p>
+		<em>Loading...</em>
+	</p>
+}
+else
+{
+	<table class="table">
+		<thead>
+		<tr>
+			<th>Date</th>
+			<th>Location</th>
+			<th>Temp. (C)</th>
+			<th>Temp. (F)</th>
+			<th>Summary</th>
+		</tr>
+		</thead>
+		<tbody>
+		@foreach (var forecast in _forecasts)
+		{
+			<tr>
+				<td>@forecast.Date.ToShortDateString()</td>
+				<td>@forecast.Location</td>
+				<td>@forecast.TemperatureC</td>
+				<td>@forecast.TemperatureF</td>
+				<td>@forecast.Summary</td>
+			</tr>
+		}
+		</tbody>
+	</table>
+}
+
+<br/>
+<br/>
+Current value: @_currentValue <button @onclick="@(() => IncreaseValue(-1))">- 1</button> <button @onclick="@(() => IncreaseValue(1))">+ 1</button>
+
+@code {
+	[Inject]
+	public IWeatherForecastService WeatherForecastService { get; set; }
+	
+	private WeatherForecast[] _forecasts;
+	private int _currentValue;
+
+	protected override async Task OnInitializedAsync()
+	{
+		_forecasts = await WeatherForecastService.GetForecastForLocation("Eindhoven");
+		await IncreaseValue(0);
+	}
+
+	private async Task IncreaseValue(int amount)
+	{
+		_currentValue = (await WeatherForecastService.Increase(new IncreaseRequest { ByAmount = amount })).NewValue;
+	}
+
+}
